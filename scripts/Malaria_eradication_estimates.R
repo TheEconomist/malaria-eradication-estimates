@@ -130,7 +130,6 @@ colnames(malaria)
 
 # Step 3. Estimate malaria burden reduced if 90% reduction by 2030, as per GTS goals --------------
 
-
 # 90% by 2030, ((inspired, but not identical, to scenario here: page 2, https://www.who.int/publications/i/item/9789240003675 ))
 
 for(i in setdiff(vars, 'population')){
@@ -151,11 +150,7 @@ for(i in setdiff(vars, 'population')){
 # Export csv:
 write_csv(malaria, 'output-data/malaria_estimates.csv')
 
-
-ggplot(malaria[malaria$year %in% 2015:2035,], aes(x=year, y=deaths_averted, col=iso3c))+theme_minimal()+geom_line()+theme(legend.pos = 'none')
-
-
-# Generate and export comparable numbers csv:
+# Step 4. Get comparables --------------
 
 # Work hours:
 # Source: https://data.oecd.org/emp/labour-force.htm#indicator-chart ; https://stats.oecd.org/Index.aspx?DataSetCode=AVE_HRS
@@ -202,3 +197,31 @@ comparables <- rbind.data.frame(c('sweden', 'days worked', sweden_work_days_year
 colnames(comparables) <- c('location', 'outcome', 'value')
 
 write_csv(comparables, 'output-data/comparables.csv')
+
+
+# Step 5. Make mock charts --------------
+
+malaria$world_work_days_lost_averted <- ave(malaria$work_days_lost_averted, malaria$year, FUN= function(x) sum(x, na.rm = T))
+malaria$world_deaths_averted <- ave(malaria$deaths_averted, malaria$year, FUN= function(x) sum(x, na.rm = T))
+
+malaria$deaths_averted_cumulative <- ave(malaria$deaths_averted, malaria$iso3c, FUN = function(x) cumsum(ifelse(is.na(x), 0, x)))
+malaria$work_days_lost_averted_cumulative <- ave(malaria$work_days_lost_averted, malaria$iso3c, FUN = function(x) cumsum(ifelse(is.na(x), 0, x)))
+
+
+ggplot(malaria[malaria$year %in% 2020:2042, ], 
+       aes(x=year, y=deaths_averted_cumulative, fill=iso3c))+
+  theme_minimal()+
+  geom_area()+
+  geom_area(aes(y=-work_days_lost_averted_cumulative/1000))+
+  geom_hline(aes(yintercept = 0))+
+  coord_flip()+scale_x_reverse()+guides(fill="none")+theme(legend.title = element_blank())+
+  geom_hline(aes(yintercept=deaths_from_cancer, col='Annual deaths from cancer (2020)'))+
+  geom_hline(aes(yintercept=-sweden_work_days_yearly/1000, col='Annual days worked in Sweden (2020)'))+
+  geom_hline(aes(yintercept=-germany_work_days_yearly/1000, col='Annual days worked in Germany (2020)'))+
+  geom_hline(aes(yintercept=deaths_from_lung_cancer, col='Annual deaths from lung cancer (2020)'))+
+  ylab('Cumulative impact \n(<- work days gained / lives saved ->) ')+xlab('')
+ggsave('plots/cumulative_impact.png')
+
+
+
+
