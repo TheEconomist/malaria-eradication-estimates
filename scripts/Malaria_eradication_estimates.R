@@ -220,7 +220,7 @@ ggplot(malaria[malaria$year %in% 2020:2042, ],
   geom_hline(aes(yintercept=-germany_work_days_yearly/1000, col='Annual days worked in Germany (2020)'))+
   geom_hline(aes(yintercept=deaths_from_lung_cancer, col='Annual deaths from lung cancer (2020)'))+
   ylab('Cumulative impact \n(<- work days gained / lives saved ->) ')+xlab('')
-ggsave('plots/cumulative_impact.png')
+ggsave('plots/cumulative_impact.png', width = 8, height = 8)
 
 
 
