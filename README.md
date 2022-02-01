@@ -6,5 +6,5 @@ Plasmodium falciparum Incidence in Sub-Saharan Africa, 2019. (Source: https://ma
   
     
 ## Sources:
-* Population estimates and projections: United Nations Department of Economic and Social Affairs (https://population.un.org/wpp/Download/Standard/Population/)
-
+* **Population estimates and projections:** United Nations Department of Economic and Social Affairs (https://population.un.org/wpp/Download/Standard/Population/)
+* **Malaria burden**: World malaria report (2021), statistical annex F (https://www.who.int/publications/i/item/9789240040496 and https://cdn.who.int/media/docs/default-source/malaria/world-malaria-reports/wmr2021-excel-annexes.zip?sfvrsn=74759e4f_5)
