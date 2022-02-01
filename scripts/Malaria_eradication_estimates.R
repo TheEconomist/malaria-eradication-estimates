@@ -138,6 +138,9 @@ for(i in setdiff(vars, 'population')){
   for(j in 2022:2030){
     malaria[malaria$year == j, paste0(i, '_if_eradication')] <- malaria[malaria$year == j, i]*(1-(j-2021)/10)
   }
+  for(j in 2031:2042){
+    malaria[malaria$year == j, paste0(i, '_if_eradication')] <- malaria[malaria$year == j, i]*0.1
+  }
 }
 
 # Generate columns showing averted outcomes if implemented:
@@ -145,16 +148,17 @@ for(i in setdiff(vars, 'population')){
   malaria[, paste0(i, '_averted')] <- malaria[, i] - malaria[, paste0(i, '_if_eradication')]
 }
 
+# Export csv:
+write_csv(malaria, 'output-data/malaria_estimates.csv')
+
+
 ggplot(malaria[malaria$year %in% 2015:2035,], aes(x=year, y=deaths_averted, col=iso3c))+theme_minimal()+geom_line()+theme(legend.pos = 'none')
 
-sum(malaria$deaths_averted, na.rm = T)
-sum(malaria$work_days_lost_averted, na.rm = T)
-sum(malaria$cases_averted, na.rm = T)
 
-# Comparable numbers:
+# Generate and export comparable numbers csv:
 
 # Work hours:
-# Source: https://data.oecd.org/emp/labour-force.htm#indicator-chart
+# Source: https://data.oecd.org/emp/labour-force.htm#indicator-chart ; https://stats.oecd.org/Index.aspx?DataSetCode=AVE_HRS
 sweden_labor_force <- 5522000
 sweden_annual_hours_per_worker <- 1424
 sweden_hours_worked_per_week_on_main_job <- 36
@@ -165,8 +169,36 @@ us_annual_hours_per_worker <- 1767
 us_hours_worked_per_week_on_main_job <- 38.7
 us_work_days_yearly <- us_labor_force*us_annual_hours_per_worker/(us_hours_worked_per_week_on_main_job/5)
 
-eu_labor_force <- 212287000
-eu_annual_hours_per_worker <- 1513
-eu_work_hours_yearly <- eu_labor_force*eu_annual_hours_per_worker
+uk_labor_force <- 34074000
+uk_annual_hours_per_worker <- 1367
+uk_hours_worked_per_week_on_main_job <- 36.3
+uk_work_days_yearly <- uk_labor_force*uk_annual_hours_per_worker/(uk_hours_worked_per_week_on_main_job/5)
 
-eu_work_hours_yearly/
+germany_labor_force <- 43517000
+germany_annual_hours_per_worker <-  1332
+germany_hours_worked_per_week_on_main_job <- 34.3
+germany_work_days_yearly <- germany_labor_force*germany_annual_hours_per_worker/(germany_hours_worked_per_week_on_main_job/5)
+
+# 
+deaths_averted <- sum(malaria$deaths_averted, na.rm = T)
+work_days_lost_averted <- sum(malaria$work_days_lost_averted, na.rm = T)
+cases_averted <- sum(malaria$cases_averted, na.rm = T)
+
+# Deaths comparisons:
+deaths_from_heart_disease <- 17600000
+deaths_from_cancer <- 10000000
+deaths_from_lung_cancer <- 1800000
+  
+# Source: https://www.who.int/news-room/fact-sheets/detail/cancer
+
+comparables <- rbind.data.frame(c('sweden', 'days worked', sweden_work_days_yearly),
+                                c('united states', 'days worked', us_work_days_yearly),
+                                c('uk', 'days worked', uk_work_days_yearly),
+                                c('germany', 'days worked', germany_work_days_yearly),
+                                c('world', 'deaths from heart disease', 
+                                  deaths_from_heart_disease),
+                                c('world', 'deaths from cancer', deaths_from_cancer),
+                                c('world', 'deaths from lung cancer', deaths_from_lung_cancer))
+colnames(comparables) <- c('location', 'outcome', 'value')
+
+write_csv(comparables, 'output-data/comparables.csv')
