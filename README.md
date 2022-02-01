@@ -5,6 +5,6 @@
 Plasmodium falciparum Incidence in Sub-Saharan Africa, 2019. (Source: https://malariaatlas.org/)
   
     
-Sources:
+## Sources:
 * Population estimates and projections: United Nations Department of Economic and Social Affairs (https://population.un.org/wpp/Download/Standard/Population/)
 
