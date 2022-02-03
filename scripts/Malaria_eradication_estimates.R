@@ -138,27 +138,80 @@ malaria$population_change <- NULL
 
 # And make clear they are estimated in separate column
 malaria$note <- NA
-malaria$note[malaria$year >= 2020] <- "Estimated based on 2020 values and population projections by the UN"
-colnames(malaria)
+malaria$note[malaria$year > 2020] <- "Estimated based on 2020 values and population projections by the UN"
 
-# Step 3. Estimate malaria burden reduced if 90% reduction by 2030, as per GTS goals --------------
+# Step 3. Estimate malaria burden reduced as per WHO goals (in 2021 update, but the same targets as in 2016) --------------
 
-# 90% by 2030, ((inspired, but not identical, to scenario here: page 2, https://www.who.int/publications/i/item/9789240003675 ))
+# Source: https://reliefweb.int/report/world/who-global-technical-strategy-malaria-2016-2030-2021-update
+# Note, we assume that these targets are not affected by a change in the WHOs methodology, which added about 22 000 deaths in 2020 (an upward adjustment of 3.5%).
+# These targets are:
+# 2025 = 75% of 2015 levels (cases (by implication work days lost), deaths)
+# 2030 = 90% of 2015 levels (cases (by implication work days lost), deaths)
 
-for(i in setdiff(vars, 'population')){
-  malaria[malaria$year <= 2021, paste0(i, '_if_eradication')] <- malaria[malaria$year <= 2021, i]
-  for(j in 2022:2030){
-    malaria[malaria$year == j, paste0(i, '_if_eradication')] <- malaria[malaria$year == j, i]*(1-(j-2021)/10)
-  }
-  for(j in 2031:2042){
-    malaria[malaria$year == j, paste0(i, '_if_eradication')] <- malaria[malaria$year == j, i]*0.1
-  }
+# First get data by year:
+# 2015
+malaria_cases_2015 <- sum(malaria$cases[malaria$year == 2015], na.rm = T)
+malaria_deaths_2015 <- sum(malaria$deaths[malaria$year == 2015], na.rm = T)
+# 2025
+malaria_cases_2025 <- sum(malaria$cases[malaria$year == 2025], na.rm = T)
+malaria_deaths_2025 <- sum(malaria$deaths[malaria$year == 2025], na.rm = T)
+# 2030
+malaria_cases_2030 <- sum(malaria$cases[malaria$year == 2030], na.rm = T)
+malaria_deaths_2030 <- sum(malaria$deaths[malaria$year == 2030], na.rm = T)
+
+# Get multipliers
+implied_decrease_cases_by_2025 <- 0.25/(malaria_cases_2025/malaria_cases_2015)
+implied_decrease_deaths_by_2025 <- 0.25/(malaria_deaths_2025/malaria_deaths_2015)
+
+implied_decrease_cases_by_2030 <- 0.10/(malaria_cases_2030/malaria_cases_2015)
+implied_decrease_deaths_by_2030 <- 0.10/(malaria_deaths_2030/malaria_deaths_2015)
+
+# Construct multipliers (conservatively assuming linear drop):
+case_decreases_by_year <- c(1, NA, NA, NA, NA, implied_decrease_cases_by_2025, NA, NA, NA, NA, implied_decrease_cases_by_2030)
+case_decreases_by_year <- approx(case_decreases_by_year, n = 11)[[2]]
+case_decreases_by_year <- cbind.data.frame("year" = 2020:2030, 
+                                           "case_decrease" = case_decreases_by_year)
+# plot(case_decreases_by_year)
+
+death_decreases_by_year <- c(1, NA, NA, NA, NA, implied_decrease_deaths_by_2025, NA, NA, NA, NA, implied_decrease_deaths_by_2030)
+death_decreases_by_year <- approx(death_decreases_by_year, n = 11)[[2]]
+death_decreases_by_year <- cbind.data.frame("year" = 2020:2030, 
+                                            "death_decrease" = death_decreases_by_year)
+# plot(death_decreases_by_year)
+
+# Merge these into main data (assuming no change before or after):
+malaria <- merge(malaria, case_decreases_by_year, by = 'year', all = T)
+malaria$case_decrease[malaria$year < 2020] <- 1
+malaria$case_decrease[malaria$year > 2030] <- case_decreases_by_year$case_decrease[case_decreases_by_year$year == 2030]
+
+malaria <- merge(malaria, death_decreases_by_year, by = 'year', all = T)
+malaria$death_decrease[malaria$year < 2020] <- 1
+malaria$death_decrease[malaria$year > 2030] <- death_decreases_by_year$death_decrease[death_decreases_by_year$year == 2030]
+
+# Construct scenarios based on them:
+for(i in c("cases_bot", "cases", "cases_top", "work_days_lost")){
+  malaria[, paste0(i, '_if_eradication')] <- malaria[, i]*malaria$case_decrease
+}
+
+for(i in c("deaths_bot", "deaths", "deaths_top")){
+  malaria[, paste0(i, '_if_eradication')] <- malaria[, i]*malaria$death_decrease
 }
 
 # Generate columns showing averted outcomes if implemented:
 for(i in setdiff(vars, 'population')){
   malaria[, paste0(i, '_averted')] <- malaria[, i] - malaria[, paste0(i, '_if_eradication')]
 }
+
+# Check that the procedure worked:
+round(sum(malaria$cases_if_eradication[malaria$year == 2025], na.rm = T)/1000, 0) == 
+  round(sum(malaria$cases[malaria$year == 2015], na.rm = T)*0.25/1000, 0)
+round(sum(malaria$cases_if_eradication[malaria$year == 2030], na.rm = T)/1000, 0) == 
+  round(sum(malaria$cases[malaria$year == 2015], na.rm = T)*0.10/1000, 0)
+
+round(sum(malaria$deaths_if_eradication[malaria$year == 2025], na.rm = T)/1000, 0) == 
+  round(sum(malaria$deaths[malaria$year == 2015], na.rm = T)*0.25/1000, 0)
+round(sum(malaria$deaths_if_eradication[malaria$year == 2030], na.rm = T)/1000, 0) == 
+  round(sum(malaria$deaths[malaria$year == 2015], na.rm = T)*0.10/1000, 0)
 
 # Export csv:
 write_csv(malaria, 'output-data/malaria_estimates.csv')
@@ -186,11 +239,6 @@ germany_labor_force <- 43517000
 germany_annual_hours_per_worker <-  1332
 germany_hours_worked_per_week_on_main_job <- 34.3
 germany_work_days_yearly <- germany_labor_force*germany_annual_hours_per_worker/(germany_hours_worked_per_week_on_main_job/5)
-
-# 
-deaths_averted <- sum(malaria$deaths_averted, na.rm = T)
-work_days_lost_averted <- sum(malaria$work_days_lost_averted, na.rm = T)
-cases_averted <- sum(malaria$cases_averted, na.rm = T)
 
 # Deaths comparisons:
 deaths_from_heart_disease <- 17600000
@@ -236,5 +284,6 @@ ggplot(malaria[malaria$year %in% 2020:2042, ],
 ggsave('plots/cumulative_impact.png', width = 8, height = 8)
 
 
+ggplot(malaria, aes(x=year, y=deaths_if_eradication, fill = iso3c))+geom_area()+theme(legend.pos = 'none')
 
 
