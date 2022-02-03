@@ -287,3 +287,6 @@ ggsave('plots/cumulative_impact.png', width = 8, height = 8)
 ggplot(malaria, aes(x=year, y=deaths_if_eradication, fill = iso3c))+geom_area()+theme(legend.pos = 'none')
 
 
+ggplot(malaria, aes(x=year, y=cases_if_eradication/population, fill = iso3c, col=iso3c))+geom_line()+theme(legend.pos = 'none')
+
+
