@@ -244,6 +244,7 @@ germany_work_days_yearly <- germany_labor_force*germany_annual_hours_per_worker/
 deaths_from_heart_disease <- 17600000
 deaths_from_cancer <- 10000000
 deaths_from_lung_cancer <- 1800000
+deaths_from_breast_cancer <- 685000
   
 # Source: https://www.who.int/news-room/fact-sheets/detail/cancer
 
@@ -254,7 +255,8 @@ comparables <- rbind.data.frame(c('sweden', 'days worked', sweden_work_days_year
                                 c('world', 'deaths from heart disease', 
                                   deaths_from_heart_disease),
                                 c('world', 'deaths from cancer', deaths_from_cancer),
-                                c('world', 'deaths from lung cancer', deaths_from_lung_cancer))
+                                c('world', 'deaths from lung cancer', deaths_from_lung_cancer),
+                                c('world', 'deaths from breast cancer', deaths_from_breast_cancer))
 colnames(comparables) <- c('location', 'outcome', 'value')
 
 write_csv(comparables, 'output-data/comparables.csv')
@@ -284,8 +286,21 @@ ggplot(malaria[malaria$year %in% 2020:2042, ],
 ggsave('plots/cumulative_impact.png', width = 8, height = 8)
 
 
-ggplot(malaria, aes(x=year, y=deaths_if_eradication, fill = iso3c))+geom_area()+theme(legend.pos = 'none')
 
+ggplot(malaria[malaria$year %in% 2020:2042, ], 
+       aes(x=year, y=deaths_averted, fill=iso3c))+
+  theme_minimal()+
+  geom_area()+
+  geom_area(aes(y=-work_days_lost_averted/1000))+
+  geom_hline(aes(yintercept = 0))+
+  coord_flip()+scale_x_reverse()+guides(fill="none")+theme(legend.title = element_blank())+
+  geom_hline(aes(yintercept=-sweden_work_days_yearly/1000, col='Annual days worked in Sweden (2020)'))+
+  geom_hline(aes(yintercept=deaths_from_breast_cancer, col='Worldwide deaths from breast cancer (2020)'))+
+  ylab('Yearly impact \n(<- work days gained, 000s / lives saved ->) ')+xlab('')
+ggsave('plots/impact.png', width = 8, height = 8)
+
+
+ggplot(malaria, aes(x=year, y=deaths_if_eradication, fill = iso3c))+geom_area()+theme(legend.pos = 'none')
 
 ggplot(malaria, aes(x=year, y=cases_if_eradication/population, fill = iso3c, col=iso3c))+geom_line()+theme(legend.pos = 'none')
 
