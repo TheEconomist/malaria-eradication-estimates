@@ -9,10 +9,11 @@ library(countrycode)
 # Step 1. Import data ------------------------------------------------------------
 
 ### Most recent estimates of malaria burden by country (WHO):
-burden <- read_xlsx("source-data/WMR2021_Annex5F.xlsx", skip = 3)
+burden <- data.frame(read_xlsx("source-data/WMR2021_Annex5F.xlsx", skip = 3))
 colnames(burden) <- c('location', 'year', 'pop', 
                       'cases_bot', 'cases', 'cases_top',
                       'deaths_bot', 'deaths', 'deaths_top')
+
 # Fix location (data in panel format means location names are implied downward from their first mention but not explicitly listed)
 current_location <- NA
 for(i in 1:nrow(burden)){if(is.na(burden$location[i])){burden$location[i] <- current_location} else {current_location <- burden$location[i]}}
@@ -42,10 +43,19 @@ days_lost_per_case <- 3 # This is from researchers at LSHT:
 # In addition, it may be worth having a look at some of the macroeconomic literature about the wider negative impacts of the presence of malaria on the economy. A human capital approach would also potentially account for the cumulative effects of loss of schooling and cognitive function on future productivity – but all of that is obviously even harder to quantify."
 #####
 
+# Converting to numeric:
+for(i in c("cases_bot", "cases_top", "deaths_bot", "deaths_top")){
+  burden[, i] <- as.numeric(burden[, i])
+}
+
 # Multiplying work days lost in:
 burden$work_days_lost_bot <- burden$cases_bot*days_lost_per_case 
 burden$work_days_lost <- burden$cases*days_lost_per_case 
 burden$work_days_lost_top <- burden$cases_top*days_lost_per_case 
+
+# Check that total matches WHO totals
+round(sum(burden$cases[burden$year == 2020], na.rm =T)/1000000, 0) == 241
+round(sum(burden$deaths[burden$year == 2020], na.rm =T)/1000, 0)   == 627
 
 ### Populations by country (historical and projected - UN):
 estimates <- read_xlsx("source-data/WPP2019_POP_F01_1_TOTAL_POPULATION_BOTH_SEXES.xlsx", 
@@ -87,6 +97,9 @@ pop <- unique(pop[!is.na(pop$year) & !is.na(pop$iso3c), c('iso3c', 'year', 'popu
 pop$population <- as.numeric(pop$population)*1000 # Source is in thousands, this converts to estimated total
 pop$year <- as.numeric(pop$year)
 
+# Check that total matches world population:
+round(sum(pop$population[pop$year == 2020])/1000000, 0) == 7795
+
 # Merge population data with malaria data
 malaria <- merge(burden, pop, by = c('iso3c', 'year'), all = T)
 malaria$year <- as.numeric(malaria$year)
@@ -103,7 +116,7 @@ vars <- c("cases_bot", "cases", "cases_top",
           "work_days_lost", "population")
 for(i in vars){malaria[, i] <- as.numeric(malaria[, i])}
 
-# We first record the most recent values
+# We first record the most recent values (2020):
 for(i in unique(malaria$iso3c)){
   for(j in vars){
   malaria[malaria$iso3c == i, paste0(j, '_in_2020')] <- malaria[malaria$year == 2020 
