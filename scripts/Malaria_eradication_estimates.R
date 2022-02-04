@@ -163,6 +163,9 @@ malaria_deaths_2030 <- sum(malaria$deaths[malaria$year == 2030], na.rm = T)
 implied_decrease_cases_by_2025 <- 0.25/(malaria_cases_2025/malaria_cases_2015)
 implied_decrease_deaths_by_2025 <- 0.25/(malaria_deaths_2025/malaria_deaths_2015)
 
+# However, 2025 goals are unrealistic
+implied_decrease_cases_by_2025 <- implied_decrease_deaths_by_2025 <- NA
+
 implied_decrease_cases_by_2030 <- 0.10/(malaria_cases_2030/malaria_cases_2015)
 implied_decrease_deaths_by_2030 <- 0.10/(malaria_deaths_2030/malaria_deaths_2015)
 
@@ -286,7 +289,6 @@ ggplot(malaria[malaria$year %in% 2020:2042, ],
 ggsave('plots/cumulative_impact.png', width = 8, height = 8)
 
 
-
 ggplot(malaria[malaria$year %in% 2020:2042, ], 
        aes(x=year, y=deaths_averted, fill=iso3c))+
   theme_minimal()+
@@ -300,9 +302,8 @@ ggplot(malaria[malaria$year %in% 2020:2042, ],
 ggsave('plots/impact.png', width = 8, height = 8)
 
 
-ggplot(malaria, aes(x=year, y=deaths_if_eradication, fill = iso3c))+geom_area(aes(y=deaths, group=iso3c), fill = 'gray')+geom_area()+theme(legend.pos = 'none')+xlab('')+ylab('')+ggtitle('Annual deaths, if eradication targets met (color), or not (gray)')
+ggplot(malaria, aes(x=year, y=deaths_if_eradication, fill = iso3c))+geom_area(aes(y=deaths, group=iso3c), fill = 'gray')+geom_area()+theme(legend.pos = 'none')+xlab('')+ylab('')+ggtitle('Annual deaths, if eradication targets met (color), or not')
 ggsave('plots/eradication_vs_current_levels.png', width = 8, height = 8)
-
 
 ggplot(malaria, aes(x=year, y=cases_if_eradication/population, fill = iso3c, col=iso3c))+geom_line()+theme(legend.pos = 'none')
 
