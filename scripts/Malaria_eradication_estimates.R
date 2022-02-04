@@ -116,11 +116,11 @@ vars <- c("cases_bot", "cases", "cases_top",
           "work_days_lost", "population")
 for(i in vars){malaria[, i] <- as.numeric(malaria[, i])}
 
-# We first record the most recent values (2020):
+# We first record the most recent values (2018-20):
 for(i in unique(malaria$iso3c)){
   for(j in vars){
-  malaria[malaria$iso3c == i, paste0(j, '_in_2020')] <- malaria[malaria$year == 2020 
-                                                                & malaria$iso3c == i, j]
+  malaria[malaria$iso3c == i, paste0(j, '_in_2020')] <- mean(malaria[malaria$year %in% c(2018:2020) 
+                                                                & malaria$iso3c == i, j], na.rm = T)
   }
 }
 
@@ -300,7 +300,9 @@ ggplot(malaria[malaria$year %in% 2020:2042, ],
 ggsave('plots/impact.png', width = 8, height = 8)
 
 
-ggplot(malaria, aes(x=year, y=deaths_if_eradication, fill = iso3c))+geom_area()+theme(legend.pos = 'none')
+ggplot(malaria, aes(x=year, y=deaths_if_eradication, fill = iso3c))+geom_area(aes(y=deaths, group=iso3c), fill = 'gray')+geom_area()+theme(legend.pos = 'none')+xlab('')+ylab('')+ggtitle('Annual deaths, if eradication targets met (color), or not (gray)')
+ggsave('plots/eradication_vs_current_levels.png', width = 8, height = 8)
+
 
 ggplot(malaria, aes(x=year, y=cases_if_eradication/population, fill = iso3c, col=iso3c))+geom_line()+theme(legend.pos = 'none')
 
