@@ -6,7 +6,7 @@ Plasmodium falciparum Incidence in Sub-Saharan Africa, 2019. (Source: https://ma
   
   
 <img width="1000" alt="image" src="https://github.com/TheEconomist/malaria-eradication-estimates/raw/master/plots/cumulative_impact.png">
-Estimated impact of 90% reduction in incidence (by 2030), 2022-2042 (Source: The Economist)    
+Estimated impact of 75% reduction in incidence (by 2030), 2022-2042 (Source: The Economist)    
     
 ## Sources:
 * **Population estimates and projections:** United Nations Department of Economic and Social Affairs (https://population.un.org/wpp/Download/Standard/Population/)

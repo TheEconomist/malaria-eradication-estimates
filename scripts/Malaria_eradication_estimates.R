@@ -142,11 +142,15 @@ malaria$note[malaria$year > 2020] <- "Estimated based on 2020 values and populat
 
 # Step 3. Estimate malaria burden reduced as per WHO goals (in 2021 update, but the same targets as in 2016) --------------
 
+# One possibility:
 # Source: https://reliefweb.int/report/world/who-global-technical-strategy-malaria-2016-2030-2021-update
 # Note, we assume that these targets are not affected by a change in the WHOs methodology, which added about 22 000 deaths in 2020 (an upward adjustment of 3.5%).
 # These targets are:
 # 2025 = 75% of 2015 levels (cases (by implication work days lost), deaths)
 # 2030 = 90% of 2015 levels (cases (by implication work days lost), deaths)
+
+# Our selected scenario:
+# -75% compared to 2015 levels in 2030:
 
 # First get data by year:
 # 2015
@@ -166,8 +170,8 @@ implied_decrease_deaths_by_2025 <- 0.25/(malaria_deaths_2025/malaria_deaths_2015
 # However, 2025 goals are unrealistic
 implied_decrease_cases_by_2025 <- implied_decrease_deaths_by_2025 <- NA
 
-implied_decrease_cases_by_2030 <- 0.10/(malaria_cases_2030/malaria_cases_2015)
-implied_decrease_deaths_by_2030 <- 0.10/(malaria_deaths_2030/malaria_deaths_2015)
+implied_decrease_cases_by_2030 <- 0.25/(malaria_cases_2030/malaria_cases_2015)
+implied_decrease_deaths_by_2030 <- 0.25/(malaria_deaths_2030/malaria_deaths_2015)
 
 # Construct multipliers (conservatively assuming linear drop):
 case_decreases_by_year <- c(1, NA, NA, NA, NA, implied_decrease_cases_by_2025, NA, NA, NA, NA, implied_decrease_cases_by_2030)
