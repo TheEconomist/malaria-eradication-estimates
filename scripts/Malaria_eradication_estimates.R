@@ -86,8 +86,8 @@ projections$iso3c <- countrycode(projections$`Region, subregion, country or area
 estimates <- estimates[!is.na(estimates$iso3c), c('iso3c', 'year', 'population.estimated')]
 projections <- projections[!is.na(projections$iso3c), c('iso3c', 'year', 'population.projected')]
 
-# ggplot(estimates, aes(x=as.numeric(year), y=as.numeric(population.estimated), col=iso3c))+geom_line()+theme(legend.pos = 'none')
-# ggplot(projections, aes(x=as.numeric(year), y=as.numeric(population.projected), col=iso3c))+geom_line()+theme(legend.pos = 'none')
+ggplot(estimates, aes(x=as.numeric(year), y=as.numeric(population.estimated), col=iso3c))+geom_line()+theme(legend.pos = 'none')
+ggplot(projections, aes(x=as.numeric(year), y=as.numeric(population.projected), col=iso3c))+geom_line()+theme(legend.pos = 'none')
 
 # Merge them together:
 pop <- merge(estimates, projections, by = c('iso3c', 'year'), all = T)
@@ -107,8 +107,8 @@ malaria$pop <- NULL
 malaria <- malaria[!is.na(malaria$year), ]
 malaria$country <- countrycode(malaria$iso3c, 'iso3c', 'country.name')
 
-# Step 2. Estimate malaria burden over the next few decades based on 2020 values --------------
-malaria <- malaria[malaria$year %in% 2000:2060, ] # first year of malaria burden estimates to mid-century. NB: the further from the present, the more uncertain such estimates become
+# Step 2. Estimate malaria burden over the next few decades based on 2018-2020 values --------------
+malaria <- malaria[malaria$year %in% 2000:2050, ] # first year of malaria burden estimates to mid-century. NB: the further from the present, the more uncertain such estimates become
 
 # We convert the variables to numeric:
 vars <- c("cases_bot", "cases", "cases_top", 
@@ -140,7 +140,14 @@ malaria$population_change <- NULL
 malaria$note <- NA
 malaria$note[malaria$year > 2020] <- "Estimated based on 2020 values and population projections by the UN"
 
-# Step 3. Estimate malaria burden reduced 
+# Step 3. Estimate malaria burden reduced as per WHO goals (in 2021 update, but the same targets as in 2016) --------------
+
+# One possibility:
+# Source: https://reliefweb.int/report/world/who-global-technical-strategy-malaria-2016-2030-2021-update
+# Note, we assume that these targets are not affected by a change in the WHOs methodology, which added about 22 000 deaths in 2020 (an upward adjustment of 3.5%).
+# These targets are:
+# 2025 = 75% of 2015 levels (cases (by implication work days lost), deaths)
+# 2030 = 90% of 2015 levels (cases (by implication work days lost), deaths)
 
 # Our selected scenario:
 # -75% compared to 2015 levels in 2030:
@@ -156,10 +163,12 @@ malaria_deaths_2025 <- sum(malaria$deaths[malaria$year == 2025], na.rm = T)
 malaria_cases_2030 <- sum(malaria$cases[malaria$year == 2030], na.rm = T)
 malaria_deaths_2030 <- sum(malaria$deaths[malaria$year == 2030], na.rm = T)
 
-# We assume linear effect (the WHO also have targets for 2025)
+# Get multipliers
+implied_decrease_cases_by_2025 <- 0.25/(malaria_cases_2025/malaria_cases_2015)
+implied_decrease_deaths_by_2025 <- 0.25/(malaria_deaths_2025/malaria_deaths_2015)
+
+# However, uncomment this line if you want to use 75% reduction by 2025 target
 implied_decrease_cases_by_2025 <- implied_decrease_deaths_by_2025 <- NA
-# implied_decrease_cases_by_2025 <- 0.25/(malaria_cases_2025/malaria_cases_2015)
-# implied_decrease_deaths_by_2025 <- 0.25/(malaria_deaths_2025/malaria_deaths_2015)
 
 implied_decrease_cases_by_2030 <- 0.25/(malaria_cases_2030/malaria_cases_2015)
 implied_decrease_deaths_by_2030 <- 0.25/(malaria_deaths_2030/malaria_deaths_2015)
@@ -201,16 +210,15 @@ for(i in setdiff(vars, 'population')){
 }
 
 # Check that the procedure worked:
-# round(sum(malaria$cases_if_eradication[malaria$year == 2025], na.rm = T)/1000, 0) == 
-#   round(sum(malaria$cases[malaria$year == 2015], na.rm = T)*0.25/1000, 0)
+round(sum(malaria$cases_if_eradication[malaria$year == 2025], na.rm = T)/1000, 0) == 
+  round(sum(malaria$cases[malaria$year == 2015], na.rm = T)*0.25/1000, 0)
 round(sum(malaria$cases_if_eradication[malaria$year == 2030], na.rm = T)/1000, 0) == 
-   round(sum(malaria$cases[malaria$year == 2015], na.rm = T)*0.25/1000, 0)
+  round(sum(malaria$cases[malaria$year == 2015], na.rm = T)*0.10/1000, 0)
 
-# round(sum(malaria$deaths_if_eradication[malaria$year == 2025], na.rm = T)/1000, 0) == 
-#   round(sum(malaria$deaths[malaria$year == 2015], na.rm = T)*0.25/1000, 0)
-
-round(sum(malaria$deaths_if_eradication[malaria$year == 2030], na.rm = T)/1000, 0) == 
+round(sum(malaria$deaths_if_eradication[malaria$year == 2025], na.rm = T)/1000, 0) == 
   round(sum(malaria$deaths[malaria$year == 2015], na.rm = T)*0.25/1000, 0)
+round(sum(malaria$deaths_if_eradication[malaria$year == 2030], na.rm = T)/1000, 0) == 
+  round(sum(malaria$deaths[malaria$year == 2015], na.rm = T)*0.10/1000, 0)
 
 # Export csv:
 write_csv(malaria, 'output-data/malaria_estimates.csv')
@@ -276,24 +284,6 @@ malaria$world_deaths_averted <- ave(malaria$deaths_averted, malaria$year, FUN= f
 malaria$deaths_averted_cumulative <- ave(malaria$deaths_averted, malaria$iso3c, FUN = function(x) cumsum(ifelse(is.na(x), 0, x)))
 malaria$work_days_lost_averted_cumulative <- ave(malaria$work_days_lost_averted, malaria$iso3c, FUN = function(x) cumsum(ifelse(is.na(x), 0, x)))
 
-# Deaths averted annualy by 2034
-sum(malaria$deaths_averted[malaria$year == 2034], na.rm = T)
-# malaria$world_deaths_averted[malaria$year == 2034][1]
-
-# Deaths averted annualy by 2036
-sum(malaria$deaths_averted[malaria$year == 2036], na.rm = T)
-# malaria$world_deaths_averted[malaria$year == 2034][1]
-
-# Deaths averted by 2052:
-sum(malaria$deaths_averted_cumulative[malaria$year == 2052])
-
-# Work day loss averted
-sum(malaria$work_days_lost_averted[malaria$year == 2040], na.rm = T)
-
-sum(malaria$work_days_lost_averted_cumulative[malaria$year == 2042])
-sum(malaria$work_days_lost_averted[malaria$year == 2042], na.rm = T)
-
-sum(malaria$work_days_lost_averted[malaria$year == 2050], na.rm = T)
 
 ggplot(malaria[malaria$year %in% 2020:2042, ], 
        aes(x=year, y=deaths_averted_cumulative, fill=iso3c))+
@@ -323,7 +313,5 @@ ggplot(malaria[malaria$year %in% 2020:2042, ],
 ggsave('plots/impact.png', width = 8, height = 8)
 
 
-ggplot(malaria[malaria$year <= 2050, ], aes(x=year, y=deaths_if_eradication, fill = iso3c))+geom_area(aes(y=deaths, group=iso3c), fill = 'gray')+geom_area()+theme(legend.pos = 'none')+xlab('')+ylab('')+ggtitle('Annual deaths, big push vs unchanged levels')
+ggplot(malaria, aes(x=year, y=deaths_if_eradication, fill = iso3c))+geom_area(aes(y=deaths, group=iso3c), fill = 'gray')+geom_area()+theme(legend.pos = 'none')+xlab('')+ylab('')+ggtitle('Annual deaths, if eradication targets met (color), or not')
 ggsave('plots/eradication_vs_current_levels.png', width = 8, height = 8)
-
-
