@@ -1,6 +1,6 @@
 ## Replication data and code for:
 # Squashing malaria could save as many lives as covid-19 has taken 
-https://www.economist.com/graphic-detail/2022/03/19/squashing-malaria-could-save-as-many-lives-as-covid-19-has-taken
+Available here: https://www.economist.com/graphic-detail/2022/03/19/squashing-malaria-could-save-as-many-lives-as-covid-19-has-taken
 
 <img width="800" alt="image" src="plots/eradication_vs_current_levels.png">
 Two scenarios for Malaria, 2010-2050. Note the big effect of population change in malarious countries, which causes deaths to increase if the levels stay the same. Note also that the "big push" scenario is optimistic in the sense that it represents a plausible effect of a 'big push': a scale-up of existing intervention together with new vaccines and mosquito-fighting techniques. Even a continuation of current levels would require effort, as the malaria burden levels could increase, too. 
